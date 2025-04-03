@@ -1,0 +1,78 @@
+Audio Fix for Lenovo Legion Pro 7i (Ubuntu 24.10)
+-------------------------------------------------
+
+Objective:
+---------
+Fix audio output on internal speakers using PipeWire.
+Symptoms:
+- Boot/login sound works
+- YouTube and apps produce no sound or stop after first working
+- 'pw-play' causes sound to stop entirely
+
+Do NOT use 'pw-play' — it breaks PipeWire routing on this system.
+
+Fix Steps:
+----------
+
+Step 1: Apply ALC287 model quirk
+--------------------------------
+1. Open terminal
+2. Create the config file:
+   sudo nano /etc/modprobe.d/alc287-speaker-fix.conf
+
+3. Add the following line:
+   options snd_hda_intel model=headset-mode-no-hp-mic
+
+4. Save and exit (Ctrl+O, Enter, Ctrl+X)
+
+5. Rebuild initramfs:
+   sudo update-initramfs -u
+
+6. Reboot:
+   sudo reboot
+
+This enables proper routing of speaker output on your Realtek ALC287 codec.
+
+Step 2: Disable ALSA autosuspend
+-------------------------------
+1. Create another config file:
+   sudo nano /etc/modprobe.d/audio-nosuspend.conf
+
+2. Add this line:
+   options snd_hda_intel power_save=0 power_save_controller=N
+
+3. Save and exit (Ctrl+O, Enter, Ctrl+X)
+
+4. Rebuild initramfs again:
+   sudo update-initramfs -u
+
+5. Reboot:
+   sudo reboot
+
+This prevents the internal speaker from being shut off by power management.
+
+Step 3: Confirm Working Audio
+-----------------------------
+1. Ensure you hear the Ubuntu login splash sound.
+2. Open Firefox or Chromium and play a YouTube video.
+3. You should hear sound reliably from internal speakers.
+4. Avoid using 'pw-play' as it breaks audio routing on this system.
+
+Commands for Confirmation:
+--------------------------
+Check audio sink (should show analog stereo):
+    pactl info
+
+Check PipeWire is active:
+    systemctl --user status pipewire
+
+Check active sink node:
+    pw-cli ls Node | grep -i analog
+
+Check sound works with standard applications:
+    Open browser, play a YouTube clip
+
+Conclusion:
+-----------
+These changes resolve the issue with audio routing to internal speakers under PipeWire. Stability is maintained as long as low-level manual tools (e.g., pw-play) are avoided.
+
