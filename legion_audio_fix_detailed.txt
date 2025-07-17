@@ -18,40 +18,25 @@ Step 1: Apply ALC287 model quirk
 --------------------------------
 1. Open terminal
 2. Create the config file:
-   sudo nano /etc/modprobe.d/alc287-speaker-fix.conf
+   sudo nano /etc/modprobe.d/audio-fix.conf
 
 3. Add the following line:
-   options snd_hda_intel model=headset-mode-no-hp-mic
+   options snd-intel-dspcfg dsp_driver=1
+   options snd-hda-intel model=alc287-dac-fixture power_save=0 power_save_controller=N
+
 
 4. Save and exit (Ctrl+O, Enter, Ctrl+X)
 
-5. Rebuild initramfs:
-   sudo update-initramfs -u
+5. Rebuild initramfs for all kernels:
+   sudo update-initramfs -u - k all
 
 6. Reboot:
    sudo reboot
 
 This enables proper routing of speaker output on your Realtek ALC287 codec.
 
-Step 2: Disable ALSA autosuspend
--------------------------------
-1. Create another config file:
-   sudo nano /etc/modprobe.d/audio-nosuspend.conf
 
-2. Add this line:
-   options snd_hda_intel power_save=0 power_save_controller=N
-
-3. Save and exit (Ctrl+O, Enter, Ctrl+X)
-
-4. Rebuild initramfs again:
-   sudo update-initramfs -u
-
-5. Reboot:
-   sudo reboot
-
-This prevents the internal speaker from being shut off by power management.
-
-Step 3: Confirm Working Audio
+Step 2: Confirm Working Audio
 -----------------------------
 1. Ensure you hear the Ubuntu login splash sound.
 2. Open Firefox or Chromium and play a YouTube video.
@@ -63,11 +48,17 @@ Commands for Confirmation:
 Check audio sink (should show analog stereo):
     pactl info
 
+   also:
+    pactl list sinks | grep -E 'Name:|State:|Description:|Mute:|Volume:'
+
 Check PipeWire is active:
     systemctl --user status pipewire
 
 Check active sink node:
     pw-cli ls Node | grep -i analog
+
+Confirm ALSA routing:
+    amixer -c0
 
 Check sound works with standard applications:
     Open browser, play a YouTube clip
@@ -75,4 +66,5 @@ Check sound works with standard applications:
 Conclusion:
 -----------
 These changes resolve the issue with audio routing to internal speakers under PipeWire. Stability is maintained as long as low-level manual tools (e.g., pw-play) are avoided.
+If updates or a Kernel change break the audio again, the above is a summary of what steps should fix it.  You might need to go back to an older kernel.
 
